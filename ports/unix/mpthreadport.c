@@ -47,6 +47,9 @@
 #define MP_THREAD_GC_SIGNAL (SIGUSR1)
 #endif
 
+// This value seems to be about right for both 32-bit and 64-bit builds.
+#define THREAD_STACK_OVERFLOW_MARGIN (8192)
+
 // this structure forms a linked list, one node per active thread
 typedef struct _thread_t {
     pthread_t id;           // system id of thread
@@ -82,10 +85,10 @@ STATIC void mp_thread_gc(int signo, siginfo_t *info, void *context) {
         // gc_collect_regs_and_stack function above
         //gc_collect_root((void**)context, sizeof(ucontext_t) / sizeof(uintptr_t));
         #if MICROPY_ENABLE_PYSTACK
-        void **ptrs = (void**)(void*)MP_STATE_THREAD(pystack_start);
-        gc_collect_root(ptrs, (MP_STATE_THREAD(pystack_cur) - MP_STATE_THREAD(pystack_start)) / sizeof(void*));
+        void **ptrs = (void **)(void *)MP_STATE_THREAD(pystack_start);
+        gc_collect_root(ptrs, (MP_STATE_THREAD(pystack_cur) - MP_STATE_THREAD(pystack_start)) / sizeof(void *));
         #endif
-        #if defined (__APPLE__)
+        #if defined(__APPLE__)
         sem_post(thread_signal_done_p);
         #else
         sem_post(&thread_signal_done);
@@ -163,7 +166,7 @@ void mp_thread_gc_others(void) {
 }
 
 mp_state_thread_t *mp_thread_get_state(void) {
-    return (mp_state_thread_t*)pthread_getspecific(tls_key);
+    return (mp_state_thread_t *)pthread_getspecific(tls_key);
 }
 
 void mp_thread_set_state(mp_state_thread_t *state) {
@@ -182,7 +185,7 @@ void mp_thread_start(void) {
     pthread_mutex_unlock(&thread_mutex);
 }
 
-void mp_thread_create(void *(*entry)(void*), void *arg, size_t *stack_size) {
+void mp_thread_create(void *(*entry)(void *), void *arg, size_t *stack_size) {
     // default stack size is 8k machine-words
     if (*stack_size == 0) {
         *stack_size = 8192 * BYTES_PER_WORD;
@@ -191,6 +194,11 @@ void mp_thread_create(void *(*entry)(void*), void *arg, size_t *stack_size) {
     // minimum stack size is set by pthreads
     if (*stack_size < PTHREAD_STACK_MIN) {
         *stack_size = PTHREAD_STACK_MIN;
+    }
+
+    // ensure there is enough stack to include a stack-overflow margin
+    if (*stack_size < 2 * THREAD_STACK_OVERFLOW_MARGIN) {
+        *stack_size = 2 * THREAD_STACK_OVERFLOW_MARGIN;
     }
 
     // set thread attributes
@@ -220,8 +228,7 @@ void mp_thread_create(void *(*entry)(void*), void *arg, size_t *stack_size) {
     }
 
     // adjust stack_size to provide room to recover from hitting the limit
-    // this value seems to be about right for both 32-bit and 64-bit builds
-    *stack_size -= 8192;
+    *stack_size -= THREAD_STACK_OVERFLOW_MARGIN;
 
     // add thread to linked list of all threads
     thread_t *th = malloc(sizeof(thread_t));

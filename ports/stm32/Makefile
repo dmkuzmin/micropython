@@ -214,6 +214,7 @@ SRC_LIBM = $(addprefix lib/libm/,\
 	kf_tan.c \
 	log1pf.c \
 	nearbyintf.c \
+	roundf.c \
 	sf_cos.c \
 	sf_erf.c \
 	sf_frexp.c \
@@ -458,14 +459,30 @@ CFLAGS_MOD += -DMBEDTLS_CONFIG_FILE='"mbedtls/mbedtls_config.h"'
 SRC_MOD += mbedtls/mbedtls_port.c
 endif
 
+ifeq ($(MICROPY_PY_BLUETOOTH),1)
+
+SRC_C += modbluetooth_hci.c
+
+ifeq ($(MICROPY_BLUETOOTH_NIMBLE),1)
+ifeq ($(MICROPY_BLUETOOTH_BTSTACK),1)
+$(error Cannot enable both NimBLE and BTstack at the same time)
+endif
+endif
+
 ifeq ($(MICROPY_BLUETOOTH_NIMBLE),1)
 include $(TOP)/extmod/nimble/nimble.mk
 SRC_C += nimble.c
-SRC_C += nimble_hci_uart.c
-EXTMOD_SRC_C += extmod/modbluetooth_nimble.c
+endif
+
+ifeq ($(MICROPY_BLUETOOTH_BTSTACK),1)
+include $(TOP)/extmod/btstack/btstack.mk
+SRC_C += btstack.c
+endif
+
 ifeq ($(MICROPY_PY_NETWORK_CYW43),1)
 DRIVERS_SRC_C += drivers/cyw43/cywbt.c
 endif
+
 endif
 
 OBJ =
