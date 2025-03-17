@@ -35,7 +35,7 @@
 #include "input.h"
 
 #if MICROPY_USE_READLINE == 1
-#include "lib/mp-readline/readline.h"
+#include "shared/readline/readline.h"
 #endif
 
 #if MICROPY_USE_READLINE == 0
@@ -43,6 +43,7 @@ char *prompt(char *p) {
     // simple read string
     static char buf[256];
     fputs(p, stdout);
+    fflush(stdout);
     char *s = fgets(buf, sizeof(buf), stdin);
     if (!s) {
         return NULL;

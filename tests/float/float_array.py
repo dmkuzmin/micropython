@@ -1,11 +1,8 @@
 try:
-    from uarray import array
+    from array import array
 except ImportError:
-    try:
-        from array import array
-    except ImportError:
-        print("SKIP")
-        raise SystemExit
+    print("SKIP")
+    raise SystemExit
 
 
 def test(a):
@@ -22,4 +19,4 @@ def test(a):
 test(array("f"))
 test(array("d"))
 
-print("{:.4f}".format(array("f", b"\xcc\xcc\xcc=")[0]))
+print("{:.4f}".format(array("f", bytes(array("I", [0x3DCCCCCC])))[0]))

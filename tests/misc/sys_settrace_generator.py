@@ -17,8 +17,8 @@ def print_stacktrace(frame, level=0):
             "  ",
             frame.f_globals["__name__"],
             frame.f_code.co_name,
-            # reduce full path to some pseudo-relative
-            "misc" + "".join(frame.f_code.co_filename.split("tests/misc")[-1:]),
+            # Keep just the filename.
+            "sys_settrace_" + frame.f_code.co_filename.split("sys_settrace_")[-1],
             frame.f_lineno,
         )
     )
@@ -48,11 +48,9 @@ def test_generator():
     gen = make_gen()
     r = 0
     try:
-
         r += gen.send(None)
 
         while True:
-
             r += gen.send(None)
 
     except StopIteration as e:

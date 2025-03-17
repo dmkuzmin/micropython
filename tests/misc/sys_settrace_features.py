@@ -6,6 +6,10 @@ except AttributeError:
     print("SKIP")
     raise SystemExit
 
+if sys.version.startswith("3.12"):
+    # There is a CPython change in settrace that is reverted in 3.13!
+    print("WARNING: this test will fail when compared to CPython 3.12.x behaviour")
+
 
 def print_stacktrace(frame, level=0):
     # Ignore CPython specific helpers.
@@ -20,9 +24,11 @@ def print_stacktrace(frame, level=0):
             "  ",
             frame.f_globals["__name__"],
             frame.f_code.co_name,
-            # reduce full path to some pseudo-relative
-            "misc" + "".join(frame.f_code.co_filename.split("tests/misc")[-1:]),
-            frame.f_lineno,
+            # Keep just the filename.
+            "sys_settrace_" + frame.f_code.co_filename.split("sys_settrace_")[-1],
+            max(
+                1, frame.f_lineno
+            ),  # CPython 3.11 emits `0` where CPython 3.6 emits `1` for the "call" event corresponding to import.
         )
     )
 
@@ -60,8 +66,15 @@ def trace_tick_handler_bob(frame, event, arg):
 
 def trace_tick_handler(frame, event, arg):
     # Ignore CPython specific helpers.
-    if frame.f_globals["__name__"].find("importlib") != -1:
+    to_ignore = ["importlib", "zipimport", "encodings"]
+    frame_name = frame.f_globals["__name__"]
+    if any(name in frame_name for name in to_ignore):
         return
+
+    # Lines 4,5,7 create the `const` lambda, and line `15` is a `_X = const()` which
+    # MicroPython will not see as it's optimised out.
+    if "sys_settrace_importme" in frame.f_code.co_filename and frame.f_lineno in (4, 5, 7, 15):
+        return trace_tick_handler
 
     print("### trace_handler::main event:", event)
     __prof__.trace_tick(frame, event, arg)
@@ -94,9 +107,9 @@ def do_tests():
     print("Who loves the sun?")
     print("Not every-", factorial(3))
 
-    from sys_settrace_subdir import trace_generic
+    from sys_settrace_subdir import sys_settrace_generic
 
-    trace_generic.run_tests()
+    sys_settrace_generic.run_tests()
     return
 
 

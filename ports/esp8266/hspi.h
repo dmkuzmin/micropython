@@ -41,7 +41,7 @@
 #define SPI_BYTE_ORDER_HIGH_TO_LOW 1
 #define SPI_BYTE_ORDER_LOW_TO_HIGH 0
 
-#ifndef CPU_CLK_FREQ //Should already be defined in eagle_soc.h
+#ifndef CPU_CLK_FREQ // Should already be defined in eagle_soc.h
 #define CPU_CLK_FREQ (80 * 1000000)
 #endif
 
@@ -52,7 +52,7 @@
 // 80 / 20 = 4 MHz
 
 void spi_init(uint8_t spi_no);
-void spi_mode(uint8_t spi_no, uint8_t spi_cpha,uint8_t spi_cpol);
+void spi_mode(uint8_t spi_no, uint8_t spi_cpha, uint8_t spi_cpol);
 void spi_init_gpio(uint8_t spi_no, uint8_t sysclk_as_spiclk);
 void spi_clock(uint8_t spi_no, uint16_t prediv, uint8_t cntdiv);
 void spi_tx_byte_order(uint8_t spi_no, uint8_t byte_order);

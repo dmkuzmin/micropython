@@ -48,7 +48,9 @@ Running ``pyboard.py --help`` gives the following output:
                             available
       --follow              follow the output after running the scripts
                             [default if no scripts given]
-      -f, --filesystem      perform a filesystem action
+      -f, --filesystem      perform a filesystem action: cp local :device | cp
+                            :device local | cat path | ls [path] | rm path | mkdir
+                            path | rmdir path
 
 Running a command on the device
 -------------------------------
@@ -68,7 +70,7 @@ example::
     $ pyboard.py -c 'print(1+1)'
 
 Similarly, the ``PYBOARD_BAUDRATE`` environment variable can be used
-to set the default for the `--baudrate` option.
+to set the default for the ``--baudrate`` option.
 
 Running a script on the device
 ------------------------------
@@ -90,12 +92,13 @@ Filesystem access
 
 Using the ``-f`` flag, the following filesystem operations are supported:
 
-* ``cp src [src...] dest`` Copy files to/from the device.
 * ``cat path`` Print the contents of a file on the device.
+* ``cp src [src...] dest`` Copy files to/from the device.
 * ``ls [path]`` List contents of a directory (defaults to current working directory).
-* ``rm path`` Remove a file.
 * ``mkdir path`` Create a directory.
+* ``rm path`` Remove a file.
 * ``rmdir path`` Remove a directory.
+* ``touch path`` Create a file if it doesn't already exist.
 
 The ``cp`` command uses a ``ssh``-like convention for referring to local and
 remote files. Any path starting with a ``:`` will be interpreted as on the
@@ -117,9 +120,8 @@ Some more examples::
     # Same, but using . instead.
     $ pyboard.py --device /dev/ttyACM0 -f cp :main.py .
 
-    # Copy three files to the device, keeping their names
-    # and paths (note: `lib` must exist on the device)
-    $ pyboard.py --device /dev/ttyACM0 -f cp main.py app.py lib/foo.py :
+    # Copy three files to the device, keeping their names.
+    $ pyboard.py --device /dev/ttyACM0 -f cp main.py app.py foo.py :
 
     # Remove a file from the device.
     $ pyboard.py --device /dev/ttyACM0 -f rm util.py
